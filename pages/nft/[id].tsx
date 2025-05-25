@@ -21,10 +21,30 @@ export default function NFTDetail() {
   const router = useRouter()
   const { id } = router.query
   const [nft, setNft] = useState<any>(null)
+  const [messages, setMessages] = useState<any[]>([])
+  const [newMessage, setNewMessage] = useState('')
+  const [walletAddress, setWalletAddress] = useState<string | null>(null)
 
   useEffect(() => {
-    if (id) fetchNFT()
+    if (id) {
+      fetchNFT()
+      fetchMessages()
+    }
   }, [id])
+
+  const connectWallet = async () => {
+    const { solana } = window as any
+    if (solana && solana.isPhantom) {
+      try {
+        const res = await solana.connect()
+        setWalletAddress(res.publicKey.toString())
+      } catch (err) {
+        alert('錢包連接失敗')
+      }
+    } else {
+      alert('請安裝 Phantom 錢包')
+    }
+  }
 
   const fetchNFT = async () => {
     const { data, error } = await supabase
@@ -33,10 +53,29 @@ export default function NFTDetail() {
       .eq('id', id)
       .single()
 
-    if (error) {
-      console.error('讀取失敗', error)
-    } else {
-      setNft(data)
+    if (!error) setNft(data)
+  }
+
+  const fetchMessages = async () => {
+    const { data, error } = await supabase
+      .from('messages')
+      .select('*')
+      .eq('nft_id', id)
+      .order('created_at', { ascending: false })
+
+    if (!error) setMessages(data || [])
+  }
+
+  const handleSendMessage = async () => {
+    if (!walletAddress || !newMessage.trim()) return
+    const { error } = await supabase.from('messages').insert({
+      nft_id: nft.id,
+      sender: walletAddress,
+      content: newMessage,
+    })
+    if (!error) {
+      setNewMessage('')
+      fetchMessages()
     }
   }
 
@@ -53,7 +92,6 @@ export default function NFTDetail() {
       const seller = new PublicKey(nft.owner)
       const mintAddress = new PublicKey(nft.mint_address)
 
-      // 🚫 防止自我購買
       if (buyer.toBase58() === seller.toBase58()) {
         alert('❌ 你不能購買自己上架的 NFT')
         return
@@ -62,7 +100,6 @@ export default function NFTDetail() {
       const priceLamports = nft.price * LAMPORTS_PER_SOL
       const connection = new Connection(clusterApiUrl('mainnet-beta'), 'confirmed')
 
-      // ✅ Step 1: Transfer SOL from buyer to seller
       const paymentTx = new Transaction().add(
         SystemProgram.transfer({
           fromPubkey: buyer,
@@ -77,7 +114,6 @@ export default function NFTDetail() {
       const paymentSig = await connection.sendRawTransaction(signedPayment.serialize())
       await connection.confirmTransaction(paymentSig)
 
-      // ✅ Step 2: Transfer NFT from seller to buyer
       const metaplex = Metaplex.make(connection)
       const token = await getOrCreateAssociatedTokenAccount(connection, provider, mintAddress, seller)
       const buyerTokenAccount = await getOrCreateAssociatedTokenAccount(connection, provider, mintAddress, buyer)
@@ -97,7 +133,6 @@ export default function NFTDetail() {
       const nftSig = await connection.sendRawTransaction(signedNFTTx.serialize())
       await connection.confirmTransaction(nftSig)
 
-      // ✅ Step 3: 將訂單寫入 Supabase
       const { error } = await supabase.from('orders').insert({
         nft_id: nft.id,
         buyer: buyer.toBase58(),
@@ -113,7 +148,6 @@ export default function NFTDetail() {
         return
       }
 
-      // ✅ Step 4: 刪除 listings 中的資料
       const { error: deleteError } = await supabase
         .from('listings')
         .delete()
@@ -161,6 +195,34 @@ export default function NFTDetail() {
       >
         立即購買（付款 + NFT 轉移 + 記錄）
       </button>
+
+      <hr style={{ margin: '40px 0' }} />
+      <h2>💬 NFT 留言區</h2>
+      {!walletAddress && (
+        <button onClick={connectWallet} style={{ marginBottom: 20 }}>
+          連接錢包以留言
+        </button>
+      )}
+      {walletAddress && (
+        <>
+          <textarea
+            placeholder="輸入留言內容..."
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            style={{ width: '100%', height: 80, marginBottom: 10 }}
+          />
+          <button onClick={handleSendMessage}>送出留言</button>
+        </>
+      )}
+      <div style={{ marginTop: 30 }}>
+        {messages.map((msg) => (
+          <div key={msg.id} style={{ borderBottom: '1px solid #ccc', padding: '10px 0' }}>
+            <strong>{msg.sender.slice(0, 4)}...{msg.sender.slice(-4)}</strong>
+            <p>{msg.content}</p>
+            <small>{new Date(msg.created_at).toLocaleString()}</small>
+          </div>
+        ))}
+      </div>
     </main>
   )
 }

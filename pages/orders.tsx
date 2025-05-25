@@ -63,7 +63,7 @@ export default function Orders() {
           }}
         >
           {orders.map((order) => (
-            <div key={order.id} style={{ border: '1px solid #ccc', padding: 12, borderRadius: 8 }}>
+            <div key={order.id} className="card">
               <h3>{order.listings?.name || 'NFT 名稱'}</h3>
               <p>價格：{order.price} SOL</p>
               <p>購買時間：{new Date(order.created_at).toLocaleString()}</p>

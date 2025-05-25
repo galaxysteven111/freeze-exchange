@@ -1,15 +1,11 @@
 body {
   transition: background-color 0.3s ease, color 0.3s ease;
+  margin: 0;
+  font-family: sans-serif;
 }
 
 body.dark {
   background-color: #111827;
-  color: white;
-}
-
-body.dark .card {
-  background-color: #1f2937;
-  border-color: #374151;
   color: white;
 }
 
@@ -19,9 +15,11 @@ body.light {
 }
 
 .card {
-  background-color: white;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  padding: 12px;
   transition: background-color 0.3s ease;
+}
+
+body.dark .card {
+  background-color: #1f2937;
+  border-color: #374151;
+  color: white;
 }

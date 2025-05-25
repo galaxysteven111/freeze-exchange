@@ -24,6 +24,7 @@ export default function NFTDetail() {
   const [messages, setMessages] = useState<any[]>([])
   const [newMessage, setNewMessage] = useState('')
   const [walletAddress, setWalletAddress] = useState<string | null>(null)
+  const [canComment, setCanComment] = useState(false)
 
   useEffect(() => {
     if (id) {
@@ -32,7 +33,6 @@ export default function NFTDetail() {
     }
   }, [id])
 
-  // ✅ Realtime 監聽留言
   useEffect(() => {
     if (!id) return
 
@@ -62,7 +62,8 @@ export default function NFTDetail() {
     if (solana && solana.isPhantom) {
       try {
         const res = await solana.connect()
-        setWalletAddress(res.publicKey.toString())
+        const address = res.publicKey.toString()
+        setWalletAddress(address)
       } catch (err) {
         alert('錢包連接失敗')
       }
@@ -78,7 +79,30 @@ export default function NFTDetail() {
       .eq('id', id)
       .single()
 
-    if (!error) setNft(data)
+    if (!error && data) {
+      setNft(data)
+      checkCommentAccess(data)
+    }
+  }
+
+  const checkCommentAccess = async (nft: any) => {
+    const user = window.solana?.publicKey?.toBase58()
+    if (!user) return
+
+    if (user === nft.owner) {
+      setCanComment(true)
+      return
+    }
+
+    const { data, error } = await supabase
+      .from('orders')
+      .select('id')
+      .eq('nft_id', nft.id)
+      .eq('buyer', user)
+
+    if (!error && data.length > 0) {
+      setCanComment(true)
+    }
   }
 
   const fetchMessages = async () => {
@@ -227,7 +251,7 @@ export default function NFTDetail() {
           連接錢包以留言
         </button>
       )}
-      {walletAddress && (
+      {walletAddress && canComment ? (
         <>
           <textarea
             placeholder="輸入留言內容..."
@@ -237,6 +261,10 @@ export default function NFTDetail() {
           />
           <button onClick={handleSendMessage}>送出留言</button>
         </>
+      ) : walletAddress && (
+        <p style={{ marginBottom: 20, color: 'gray' }}>
+          ❌ 僅限賣家與已購買者留言
+        </p>
       )}
       <div style={{ marginTop: 30 }}>
         {messages.map((msg) => (

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
+import Navbar from '../components/Navbar' // ✅ 新增：引入 Navbar
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -37,7 +38,7 @@ export default function ListNFT() {
       alert('上架失敗')
       console.error(error)
     } else {
-      alert('NFT 已成功上架！')
+      alert('✅ NFT 已成功上架！')
       setForm({ name: '', image_url: '', mint_address: '', description: '', price: '' })
     }
   }
@@ -57,22 +58,25 @@ export default function ListNFT() {
   }
 
   return (
-    <main style={{ maxWidth: 600, margin: '0 auto', padding: 20 }}>
-      <h1>上架你的 NFT</h1>
+    <>
+      <Navbar /> {/* ✅ 新增：導覽列 */}
+      <main style={{ maxWidth: 600, margin: '0 auto', padding: 20 }}>
+        <h1>上架你的 NFT</h1>
 
-      {!walletAddress && (
-        <button onClick={connectWallet} style={{ marginBottom: 20 }}>
-          連接 Phantom 錢包
-        </button>
-      )}
+        {!walletAddress && (
+          <button onClick={connectWallet} style={{ marginBottom: 20 }}>
+            連接 Phantom 錢包
+          </button>
+        )}
 
-      <input name="name" placeholder="NFT 名稱" value={form.name} onChange={handleChange} style={{ display: 'block', width: '100%', marginBottom: 10 }} />
-      <input name="image_url" placeholder="圖片網址" value={form.image_url} onChange={handleChange} style={{ display: 'block', width: '100%', marginBottom: 10 }} />
-      <input name="mint_address" placeholder="Mint Address" value={form.mint_address} onChange={handleChange} style={{ display: 'block', width: '100%', marginBottom: 10 }} />
-      <textarea name="description" placeholder="描述" value={form.description} onChange={handleChange} style={{ display: 'block', width: '100%', marginBottom: 10 }} />
-      <input name="price" type="number" placeholder="價格 (SOL)" value={form.price} onChange={handleChange} style={{ display: 'block', width: '100%', marginBottom: 10 }} />
+        <input name="name" placeholder="NFT 名稱" value={form.name} onChange={handleChange} style={{ display: 'block', width: '100%', marginBottom: 10 }} />
+        <input name="image_url" placeholder="圖片網址" value={form.image_url} onChange={handleChange} style={{ display: 'block', width: '100%', marginBottom: 10 }} />
+        <input name="mint_address" placeholder="Mint Address" value={form.mint_address} onChange={handleChange} style={{ display: 'block', width: '100%', marginBottom: 10 }} />
+        <textarea name="description" placeholder="描述" value={form.description} onChange={handleChange} style={{ display: 'block', width: '100%', marginBottom: 10 }} />
+        <input name="price" type="number" placeholder="價格 (SOL)" value={form.price} onChange={handleChange} style={{ display: 'block', width: '100%', marginBottom: 10 }} />
 
-      <button onClick={handleSubmit}>確認上架</button>
-    </main>
+        <button onClick={handleSubmit}>確認上架</button>
+      </main>
+    </>
   )
 }

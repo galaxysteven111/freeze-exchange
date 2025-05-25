@@ -44,6 +44,23 @@ export default function MyListings() {
     if (!error) setListings(data || [])
   }
 
+  const handleRemove = async (id: string) => {
+    const confirm = window.confirm('你確定要下架這個 NFT 嗎？')
+    if (!confirm) return
+
+    const { error } = await supabase
+      .from('listings')
+      .delete()
+      .eq('id', id)
+
+    if (error) {
+      alert('❌ 下架失敗')
+    } else {
+      alert('✅ NFT 已下架')
+      fetchMyListings() // 重新載入
+    }
+  }
+
   return (
     <>
       <Navbar />
@@ -72,18 +89,31 @@ export default function MyListings() {
               <h3>{item.name}</h3>
               <p>{item.description}</p>
               <p><strong>價格：</strong>{item.price} SOL</p>
-              <Link href={`/nft/${item.id}`}>
-                <button style={{
-                  marginTop: 10,
-                  padding: '6px 12px',
-                  backgroundColor: '#6366f1',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: 4
-                }}>
-                  查看詳情
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10 }}>
+                <Link href={`/nft/${item.id}`}>
+                  <button style={{
+                    padding: '6px 12px',
+                    backgroundColor: '#6366f1',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: 4
+                  }}>
+                    查看詳情
+                  </button>
+                </Link>
+                <button
+                  onClick={() => handleRemove(item.id)}
+                  style={{
+                    padding: '6px 12px',
+                    backgroundColor: '#ef4444',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: 4
+                  }}
+                >
+                  ❌ 下架
                 </button>
-              </Link>
+              </div>
             </div>
           ))}
         </div>

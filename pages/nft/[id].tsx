@@ -266,15 +266,41 @@ export default function NFTDetail() {
           ❌ 僅限賣家與已購買者留言
         </p>
       )}
-      <div style={{ marginTop: 30 }}>
-        {messages.map((msg) => (
-          <div key={msg.id} style={{ borderBottom: '1px solid #ccc', padding: '10px 0' }}>
-            <strong>{msg.sender.slice(0, 4)}...{msg.sender.slice(-4)}</strong>
-            <p>{msg.content}</p>
-            <small>{new Date(msg.created_at).toLocaleString()}</small>
+<div style={{ marginTop: 30 }}>
+  {messages.map((msg) => {
+    const isMine = msg.sender === walletAddress
+    return (
+      <div
+        key={msg.id}
+        style={{
+          display: 'flex',
+          justifyContent: isMine ? 'flex-end' : 'flex-start',
+          marginBottom: 10
+        }}
+      >
+        <div
+          style={{
+            backgroundColor: isMine ? '#6366f1' : '#e5e7eb',
+            color: isMine ? 'white' : '#111827',
+            padding: '10px 14px',
+            borderRadius: 16,
+            maxWidth: '70%',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+          }}
+        >
+          <div style={{ fontSize: 12, marginBottom: 4, opacity: 0.7 }}>
+            {isMine ? '你' : `${msg.sender.slice(0, 4)}...${msg.sender.slice(-4)}`}
           </div>
-        ))}
+          <div style={{ wordBreak: 'break-word' }}>{msg.content}</div>
+          <div style={{ fontSize: 10, marginTop: 6, textAlign: 'right', opacity: 0.5 }}>
+            {new Date(msg.created_at).toLocaleString()}
+          </div>
+        </div>
       </div>
+    )
+  })}
+</div>
+
     </main>
   )
 }

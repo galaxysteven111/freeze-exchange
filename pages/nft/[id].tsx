@@ -9,7 +9,10 @@ import {
   LAMPORTS_PER_SOL,
   clusterApiUrl,
 } from '@solana/web3.js'
-import { createTransferInstruction, getOrCreateAssociatedTokenAccount } from '@solana/spl-token'
+import {
+  createTransferInstruction,
+  getOrCreateAssociatedTokenAccount,
+} from '@solana/spl-token'
 import { Metaplex } from '@metaplex-foundation/js'
 
 const supabase = createClient(
@@ -44,7 +47,7 @@ export default function NFTDetail() {
           event: 'INSERT',
           schema: 'public',
           table: 'messages',
-          filter: `nft_id=eq.${id}`
+          filter: `nft_id=eq.${id}`,
         },
         (payload) => {
           setMessages((prev) => [payload.new, ...prev])
@@ -145,6 +148,18 @@ export default function NFTDetail() {
         return
       }
 
+      // ✅ 檢查是否還存在 listings（防止被搶先買）
+      const { data: latestData, error: latestError } = await supabase
+        .from('listings')
+        .select('id')
+        .eq('id', nft.id)
+        .single()
+
+      if (latestError || !latestData) {
+        alert('❌ 此 NFT 已被其他人購買')
+        return
+      }
+
       const priceLamports = nft.price * LAMPORTS_PER_SOL
       const connection = new Connection(clusterApiUrl('mainnet-beta'), 'confirmed')
 
@@ -191,8 +206,7 @@ export default function NFTDetail() {
       })
 
       if (error) {
-        console.error('寫入訂單失敗', error)
-        alert('NFT 轉移成功，但儲存訂單資料失敗')
+        alert('訂單儲存失敗')
         return
       }
 
@@ -202,18 +216,15 @@ export default function NFTDetail() {
         .eq('id', nft.id)
 
       if (deleteError) {
-        console.error('刪除 listings 失敗', deleteError)
-        alert('訂單已成立，但無法從市集移除 NFT')
+        alert('已購買，但無法移除 listings')
       } else {
-        alert(`✅ 成交完成！\n付款 tx: ${paymentSig}\nNFT tx: ${nftSig}`)
+        alert(`✅ 成交完成！付款: ${paymentSig} / NFT: ${nftSig}`)
       }
-
     } catch (err) {
       console.error('❌ 發生錯誤：', err)
-      alert('交易失敗，請檢查錢包與鏈上狀態')
+      alert('交易失敗')
     }
   }
-
   if (!nft) return <p style={{ padding: 20 }}>載入中...</p>
 
   return (
@@ -222,7 +233,12 @@ export default function NFTDetail() {
       <img
         src={nft.image_url}
         alt={nft.name}
-        style={{ width: '100%', maxHeight: 400, objectFit: 'cover', marginBottom: 20 }}
+        style={{
+          width: '100%',
+          maxHeight: 400,
+          objectFit: 'cover',
+          marginBottom: 20,
+        }}
       />
       <p><strong>描述：</strong>{nft.description}</p>
       <p><strong>價格：</strong>{nft.price} SOL</p>
@@ -238,7 +254,7 @@ export default function NFTDetail() {
           padding: '10px 20px',
           border: 'none',
           borderRadius: 4,
-          cursor: 'pointer'
+          cursor: 'pointer',
         }}
       >
         立即購買（付款 + NFT 轉移 + 記錄）
@@ -246,11 +262,13 @@ export default function NFTDetail() {
 
       <hr style={{ margin: '40px 0' }} />
       <h2>💬 NFT 留言區</h2>
+
       {!walletAddress && (
         <button onClick={connectWallet} style={{ marginBottom: 20 }}>
           連接錢包以留言
         </button>
       )}
+
       {walletAddress && canComment ? (
         <>
           <textarea
@@ -266,41 +284,41 @@ export default function NFTDetail() {
           ❌ 僅限賣家與已購買者留言
         </p>
       )}
-<div style={{ marginTop: 30 }}>
-  {messages.map((msg) => {
-    const isMine = msg.sender === walletAddress
-    return (
-      <div
-        key={msg.id}
-        style={{
-          display: 'flex',
-          justifyContent: isMine ? 'flex-end' : 'flex-start',
-          marginBottom: 10
-        }}
-      >
-        <div
-          style={{
-            backgroundColor: isMine ? '#6366f1' : '#e5e7eb',
-            color: isMine ? 'white' : '#111827',
-            padding: '10px 14px',
-            borderRadius: 16,
-            maxWidth: '70%',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
-          }}
-        >
-          <div style={{ fontSize: 12, marginBottom: 4, opacity: 0.7 }}>
-            {isMine ? '你' : `${msg.sender.slice(0, 4)}...${msg.sender.slice(-4)}`}
-          </div>
-          <div style={{ wordBreak: 'break-word' }}>{msg.content}</div>
-          <div style={{ fontSize: 10, marginTop: 6, textAlign: 'right', opacity: 0.5 }}>
-            {new Date(msg.created_at).toLocaleString()}
-          </div>
-        </div>
-      </div>
-    )
-  })}
-</div>
 
+      <div style={{ marginTop: 30 }}>
+        {messages.map((msg) => {
+          const isMine = msg.sender === walletAddress
+          return (
+            <div
+              key={msg.id}
+              style={{
+                display: 'flex',
+                justifyContent: isMine ? 'flex-end' : 'flex-start',
+                marginBottom: 10,
+              }}
+            >
+              <div
+                style={{
+                  backgroundColor: isMine ? '#6366f1' : '#e5e7eb',
+                  color: isMine ? 'white' : '#111827',
+                  padding: '10px 14px',
+                  borderRadius: 16,
+                  maxWidth: '70%',
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+                }}
+              >
+                <div style={{ fontSize: 12, marginBottom: 4, opacity: 0.7 }}>
+                  {isMine ? '你' : `${msg.sender.slice(0, 4)}...${msg.sender.slice(-4)}`}
+                </div>
+                <div style={{ wordBreak: 'break-word' }}>{msg.content}</div>
+                <div style={{ fontSize: 10, marginTop: 6, textAlign: 'right', opacity: 0.5 }}>
+                  {new Date(msg.created_at).toLocaleString()}
+                </div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
     </main>
   )
 }

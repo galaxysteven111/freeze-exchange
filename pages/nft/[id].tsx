@@ -148,7 +148,6 @@ export default function NFTDetail() {
         return
       }
 
-      // ✅ 檢查是否還存在 listings（防止被搶先買）
       const { data: latestData, error: latestError } = await supabase
         .from('listings')
         .select('id')
@@ -156,7 +155,7 @@ export default function NFTDetail() {
         .single()
 
       if (latestError || !latestData) {
-        alert('❌ 此 NFT 已被其他人購買')
+        alert('❌ 這個 NFT 已經被其他人買走了')
         return
       }
 
@@ -196,7 +195,7 @@ export default function NFTDetail() {
       const nftSig = await connection.sendRawTransaction(signedNFTTx.serialize())
       await connection.confirmTransaction(nftSig)
 
-      const { error } = await supabase.from('orders').insert({
+      await supabase.from('orders').insert({
         nft_id: nft.id,
         buyer: buyer.toBase58(),
         seller: seller.toBase58(),
@@ -205,24 +204,22 @@ export default function NFTDetail() {
         nft_sig: nftSig,
       })
 
-      if (error) {
-        alert('訂單儲存失敗')
-        return
-      }
+      // ✅ 寫入 sold_items 成交紀錄
+      await supabase.from('sold_items').insert({
+        name: nft.name,
+        image_url: nft.image_url,
+        mint_address: nft.mint_address,
+        price: nft.price,
+        seller: seller.toBase58(),
+        buyer: buyer.toBase58(),
+      })
 
-      const { error: deleteError } = await supabase
-        .from('listings')
-        .delete()
-        .eq('id', nft.id)
+      await supabase.from('listings').delete().eq('id', nft.id)
 
-      if (deleteError) {
-        alert('已購買，但無法移除 listings')
-      } else {
-        alert(`✅ 成交完成！付款: ${paymentSig} / NFT: ${nftSig}`)
-      }
+      alert(`✅ 成交完成！\n付款: ${paymentSig}\nNFT: ${nftSig}`)
     } catch (err) {
       console.error('❌ 發生錯誤：', err)
-      alert('交易失敗')
+      alert('交易失敗，請檢查錢包與鏈上狀態')
     }
   }
   if (!nft) return <p style={{ padding: 20 }}>載入中...</p>

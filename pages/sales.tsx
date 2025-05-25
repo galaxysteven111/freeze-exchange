@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
+import Navbar from '../components/Navbar' // ✅ 新增導覽列
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -40,36 +41,37 @@ export default function Sales() {
       .eq('seller', walletAddress)
       .order('created_at', { ascending: false })
 
-    if (error) {
-      console.error('讀取銷售紀錄失敗', error)
-    } else {
+    if (!error) {
       setSales(data || [])
     }
   }
 
   return (
-    <main style={{ maxWidth: 1000, margin: '0 auto', padding: 20 }}>
-      <h1>📦 我的銷售紀錄</h1>
-      {walletAddress ? (
-        <p>錢包地址：{walletAddress}</p>
-      ) : (
-        <p>尚未連接錢包</p>
-      )}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20, marginTop: 20 }}>
-        {sales.map((sale) => (
-          <div key={sale.id} style={{ border: '1px solid #ccc', padding: 10, width: 280 }}>
-            <h3>{sale.listings?.name || 'NFT 名稱'}</h3>
-            <p>售價：{sale.price} SOL</p>
-            <p>買家：{sale.buyer.slice(0, 4)}...{sale.buyer.slice(-4)}</p>
-            <p>時間：{new Date(sale.created_at).toLocaleString()}</p>
-            <Link href={`/nft/${sale.nft_id}`}>
-              <button style={{ marginTop: 10, padding: '6px 12px', backgroundColor: '#6366f1', color: 'white', border: 'none', borderRadius: 4 }}>
-                查看詳情
-              </button>
-            </Link>
-          </div>
-        ))}
-      </div>
-    </main>
+    <>
+      <Navbar /> {/* ✅ 導覽列插入 */}
+      <main style={{ maxWidth: 1000, margin: '0 auto', padding: 20 }}>
+        <h1>📦 我的銷售紀錄</h1>
+        {walletAddress ? (
+          <p>錢包地址：{walletAddress}</p>
+        ) : (
+          <p>尚未連接錢包</p>
+        )}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20, marginTop: 20 }}>
+          {sales.map((sale) => (
+            <div key={sale.id} style={{ border: '1px solid #ccc', padding: 12, width: 280 }}>
+              <h3>{sale.listings?.name || 'NFT 名稱'}</h3>
+              <p>售價：{sale.price} SOL</p>
+              <p>買家：{sale.buyer.slice(0, 4)}...{sale.buyer.slice(-4)}</p>
+              <p>時間：{new Date(sale.created_at).toLocaleString()}</p>
+              <Link href={`/nft/${sale.nft_id}`}>
+                <button style={{ marginTop: 10, padding: '6px 12px', backgroundColor: '#6366f1', color: 'white', border: 'none', borderRadius: 4 }}>
+                  查看詳情
+                </button>
+              </Link>
+            </div>
+          ))}
+        </div>
+      </main>
+    </>
   )
 }

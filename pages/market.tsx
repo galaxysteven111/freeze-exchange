@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
+import Link from 'next/link'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -36,12 +37,14 @@ export default function Market() {
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20 }}>
         {nfts.map((item) => (
           <div key={item.id} style={{ border: '1px solid #ccc', padding: 10, width: 280 }}>
-            <img
-              src={item.image_url}
-              alt={item.name}
-              style={{ width: '100%', height: 200, objectFit: 'cover', marginBottom: 10 }}
-            />
-            <h3>{item.name}</h3>
+            <Link href={`/nft/${item.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+              <img
+                src={item.image_url}
+                alt={item.name}
+                style={{ width: '100%', height: 200, objectFit: 'cover', marginBottom: 10 }}
+              />
+              <h3>{item.name}</h3>
+            </Link>
             <p>{item.description}</p>
             <p><strong>{item.price} SOL</strong></p>
             <button

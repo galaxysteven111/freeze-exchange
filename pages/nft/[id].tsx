@@ -91,22 +91,35 @@ export default function NFTDetail() {
       const nftSig = await connection.sendRawTransaction(signedNFTTx.serialize())
       await connection.confirmTransaction(nftSig)
 
-      // ✅ Step 3: 將訂單寫入 Supabase
-      const { error } = await supabase.from('orders').insert({
-        nft_id: nft.id,
-        buyer: buyer.toBase58(),
-        seller: seller.toBase58(),
-        price: nft.price,
-        payment_sig: paymentSig,
-        nft_sig: nftSig,
-      })
+// ✅ Step 3: 將訂單寫入 Supabase
+const { error } = await supabase.from('orders').insert({
+  nft_id: nft.id,
+  buyer: buyer.toBase58(),
+  seller: seller.toBase58(),
+  price: nft.price,
+  payment_sig: paymentSig,
+  nft_sig: nftSig,
+})
 
-      if (error) {
-        console.error('寫入訂單失敗', error)
-        alert('NFT 轉移成功，但儲存訂單資料失敗')
-      } else {
-        alert(`✅ 成功完成交易！\n付款 tx: ${paymentSig}\nNFT 轉帳 tx: ${nftSig}`)
-      }
+if (error) {
+  console.error('寫入訂單失敗', error)
+  alert('NFT 轉移成功，但儲存訂單資料失敗')
+  return
+}
+
+// ✅ Step 4: 刪除 listings 中的資料
+const { error: deleteError } = await supabase
+  .from('listings')
+  .delete()
+  .eq('id', nft.id)
+
+if (deleteError) {
+  console.error('刪除 listings 失敗', deleteError)
+  alert('訂單已成立，但無法從市集移除 NFT')
+} else {
+  alert(`✅ 成交完成！\n付款 tx: ${paymentSig}\nNFT tx: ${nftSig}`)
+}
+
 
     } catch (err) {
       console.error('❌ 發生錯誤：', err)

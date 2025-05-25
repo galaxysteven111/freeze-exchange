@@ -26,17 +26,38 @@ export default function Market() {
     }
   }
 
+  const handleBuy = (item: any) => {
+    alert(`🛒 未來將付款 ${item.price} SOL 購買：${item.name}\n\n（之後會整合 Phantom 實際交易）`)
+  }
+
   return (
     <main style={{ maxWidth: 1000, margin: '0 auto', padding: 20 }}>
       <h1>市集 | 所有上架的 NFT</h1>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20 }}>
         {nfts.map((item) => (
           <div key={item.id} style={{ border: '1px solid #ccc', padding: 10, width: 280 }}>
-            <img src={item.image_url} alt={item.name} style={{ width: '100%', height: 200, objectFit: 'cover' }} />
+            <img
+              src={item.image_url}
+              alt={item.name}
+              style={{ width: '100%', height: 200, objectFit: 'cover', marginBottom: 10 }}
+            />
             <h3>{item.name}</h3>
             <p>{item.description}</p>
             <p><strong>{item.price} SOL</strong></p>
-            {/* 未來這裡可以加立即購買按鈕 */}
+            <button
+              onClick={() => handleBuy(item)}
+              style={{
+                marginTop: 10,
+                backgroundColor: '#6366f1',
+                color: 'white',
+                padding: '6px 12px',
+                border: 'none',
+                borderRadius: 4,
+                cursor: 'pointer'
+              }}
+            >
+              立即購買
+            </button>
           </div>
         ))}
       </div>

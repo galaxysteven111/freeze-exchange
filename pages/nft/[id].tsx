@@ -78,10 +78,10 @@ export default function NFTDetail() {
 
       const nftTransferTx = new Transaction().add(
         createTransferInstruction(
-          token.address, // source
-          buyerTokenAccount.address, // destination
-          seller, // owner
-          1 // amount = 1 NFT
+          token.address,
+          buyerTokenAccount.address,
+          seller,
+          1
         )
       )
       nftTransferTx.feePayer = buyer
@@ -91,4 +91,58 @@ export default function NFTDetail() {
       const nftSig = await connection.sendRawTransaction(signedNFTTx.serialize())
       await connection.confirmTransaction(nftSig)
 
-      alert(`✅ 成功完成交易！\n付款 tx: ${paymentSig}\nNFT 轉帳
+      // ✅ Step 3: 將訂單寫入 Supabase
+      const { error } = await supabase.from('orders').insert({
+        nft_id: nft.id,
+        buyer: buyer.toBase58(),
+        seller: seller.toBase58(),
+        price: nft.price,
+        payment_sig: paymentSig,
+        nft_sig: nftSig,
+      })
+
+      if (error) {
+        console.error('寫入訂單失敗', error)
+        alert('NFT 轉移成功，但儲存訂單資料失敗')
+      } else {
+        alert(`✅ 成功完成交易！\n付款 tx: ${paymentSig}\nNFT 轉帳 tx: ${nftSig}`)
+      }
+
+    } catch (err) {
+      console.error('❌ 發生錯誤：', err)
+      alert('交易失敗，請檢查錢包與鏈上狀態')
+    }
+  }
+
+  if (!nft) return <p style={{ padding: 20 }}>載入中...</p>
+
+  return (
+    <main style={{ maxWidth: 700, margin: '0 auto', padding: 20 }}>
+      <h1>{nft.name}</h1>
+      <img
+        src={nft.image_url}
+        alt={nft.name}
+        style={{ width: '100%', maxHeight: 400, objectFit: 'cover', marginBottom: 20 }}
+      />
+      <p><strong>描述：</strong>{nft.description}</p>
+      <p><strong>價格：</strong>{nft.price} SOL</p>
+      <p><strong>Mint Address：</strong>{nft.mint_address}</p>
+      <p><strong>賣家地址：</strong>{nft.owner}</p>
+
+      <button
+        onClick={handleBuy}
+        style={{
+          marginTop: 20,
+          backgroundColor: '#6366f1',
+          color: 'white',
+          padding: '10px 20px',
+          border: 'none',
+          borderRadius: 4,
+          cursor: 'pointer'
+        }}
+      >
+        立即購買（付款 + NFT 轉移 + 記錄）
+      </button>
+    </main>
+  )
+}

@@ -46,7 +46,7 @@ export default function NFTDetail() {
       <p><strong>賣家地址：</strong>{nft.owner}</p>
 
       <button
-        onClick={() => alert(`未來將付款 ${nft.price} SOL 購買 ${nft.name}`)}
+        onClick={() => alert(`🛒 未來將付款 ${nft.price} SOL 購買：${nft.name}`)}
         style={{
           marginTop: 20,
           backgroundColor: '#6366f1',

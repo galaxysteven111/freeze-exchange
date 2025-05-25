@@ -63,7 +63,7 @@ export default function Sales() {
           }}
         >
           {sales.map((sale) => (
-            <div key={sale.id} style={{ border: '1px solid #ccc', padding: 12, borderRadius: 8 }}>
+            <div key={sale.id} className="card">
               <h3>{sale.listings?.name || 'NFT 名稱'}</h3>
               <p>售價：{sale.price} SOL</p>
               <p>買家：{sale.buyer.slice(0, 4)}...{sale.buyer.slice(-4)}</p>

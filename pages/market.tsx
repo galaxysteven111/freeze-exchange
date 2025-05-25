@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
+import Navbar from '../components/Navbar' // ✅ 新增這行：導覽列
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -32,38 +33,46 @@ export default function Market() {
   }
 
   return (
-    <main style={{ maxWidth: 1000, margin: '0 auto', padding: 20 }}>
-      <h1>市集 | 所有上架的 NFT</h1>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20 }}>
-        {nfts.map((item) => (
-          <div key={item.id} style={{ border: '1px solid #ccc', padding: 10, width: 280 }}>
-            <Link href={`/nft/${item.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-              <img
-                src={item.image_url}
-                alt={item.name}
-                style={{ width: '100%', height: 200, objectFit: 'cover', marginBottom: 10 }}
-              />
-              <h3>{item.name}</h3>
-            </Link>
-            <p>{item.description}</p>
-            <p><strong>{item.price} SOL</strong></p>
-            <button
-              onClick={() => handleBuy(item)}
-              style={{
-                marginTop: 10,
-                backgroundColor: '#6366f1',
-                color: 'white',
-                padding: '6px 12px',
-                border: 'none',
-                borderRadius: 4,
-                cursor: 'pointer'
-              }}
-            >
-              立即購買
-            </button>
-          </div>
-        ))}
-      </div>
-    </main>
+    <>
+      <Navbar /> {/* ✅ 導覽列插入這裡 */}
+      <main style={{ maxWidth: 1000, margin: '0 auto', padding: 20 }}>
+        <h1>市集 | 所有上架的 NFT</h1>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20 }}>
+          {nfts.map((item) => (
+            <div key={item.id} style={{ border: '1px solid #ccc', padding: 10, width: 280 }}>
+              <Link href={`/nft/${item.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                <img
+                  src={item.image_url}
+                  alt={item.name}
+                  style={{
+                    width: '100%',
+                    height: 200,
+                    objectFit: 'cover',
+                    marginBottom: 10,
+                  }}
+                />
+                <h3>{item.name}</h3>
+              </Link>
+              <p>{item.description}</p>
+              <p><strong>{item.price} SOL</strong></p>
+              <button
+                onClick={() => handleBuy(item)}
+                style={{
+                  marginTop: 10,
+                  backgroundColor: '#6366f1',
+                  color: 'white',
+                  padding: '6px 12px',
+                  border: 'none',
+                  borderRadius: 4,
+                  cursor: 'pointer'
+                }}
+              >
+                立即購買
+              </button>
+            </div>
+          ))}
+        </div>
+      </main>
+    </>
   )
 }

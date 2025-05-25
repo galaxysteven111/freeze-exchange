@@ -32,6 +32,31 @@ export default function NFTDetail() {
     }
   }, [id])
 
+  // ✅ Realtime 監聽留言
+  useEffect(() => {
+    if (!id) return
+
+    const channel = supabase
+      .channel('realtime-messages')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `nft_id=eq.${id}`
+        },
+        (payload) => {
+          setMessages((prev) => [payload.new, ...prev])
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [id])
+
   const connectWallet = async () => {
     const { solana } = window as any
     if (solana && solana.isPhantom) {
@@ -75,7 +100,6 @@ export default function NFTDetail() {
     })
     if (!error) {
       setNewMessage('')
-      fetchMessages()
     }
   }
 

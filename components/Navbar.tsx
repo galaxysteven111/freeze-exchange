@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, FC } from 'react'
 
 // ✅ 管理員錢包地址（請替換成你自己的）
 const ADMIN_WALLET = '72gKWbsA68HV1i451ihNAMqwVzud9cmUBtsdkoey1BoV'
@@ -14,7 +14,7 @@ const navItems = [
   { label: '成交歷史', href: '/history' },
 ]
 
-export default function Navbar() {
+const Navbar: FC = () => {
   const router = useRouter()
   const [darkMode, setDarkMode] = useState(false)
   const [walletAddress, setWalletAddress] = useState<string | null>(null)
@@ -109,3 +109,5 @@ export default function Navbar() {
     </nav>
   )
 }
+
+export default Navbar

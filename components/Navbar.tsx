@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 const navItems = [
   { label: '市集', href: '/market' },
   { label: '上架 NFT', href: '/list' },
+  { label: '我的上架', href: '/mylistings' }, // ✅ 新增這一行
   { label: '我的訂單', href: '/orders' },
   { label: '我的銷售', href: '/sales' },
   { label: '成交歷史', href: '/history' },
@@ -14,7 +15,6 @@ export default function Navbar() {
   const router = useRouter()
   const [darkMode, setDarkMode] = useState(false)
 
-  // ✅ 初始載入時從 localStorage 讀取主題
   useEffect(() => {
     const saved = localStorage.getItem('theme')
     if (saved === 'dark') {
@@ -28,7 +28,6 @@ export default function Navbar() {
     }
   }, [])
 
-  // ✅ 點擊切換主題
   const toggleDark = () => {
     const isDark = !darkMode
     setDarkMode(isDark)
@@ -56,14 +55,14 @@ export default function Navbar() {
       top: 0,
       zIndex: 50
     }}>
-      {/* 左邊：導覽列項目 */}
+      {/* 左側導覽連結 */}
       <div style={{ display: 'flex', gap: 20 }}>
         {navItems.map((item) => (
           <Link key={item.href} href={item.href}>
             <span style={{
               color: router.pathname === item.href ? '#60a5fa' : 'white',
               fontWeight: router.pathname === item.href ? 'bold' : 'normal',
-              cursor: 'pointer'
+              cursor: 'pointer',
             }}>
               {item.label}
             </span>
@@ -71,7 +70,7 @@ export default function Navbar() {
         ))}
       </div>
 
-      {/* 右邊：主題切換按鈕 */}
+      {/* 右側主題切換按鈕 */}
       <button
         onClick={toggleDark}
         style={{

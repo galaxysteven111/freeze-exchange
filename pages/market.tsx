@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
-import Navbar from '../components/Navbar' // ✅ 新增這行：導覽列
+import Navbar from '../components/Navbar'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -34,12 +34,18 @@ export default function Market() {
 
   return (
     <>
-      <Navbar /> {/* ✅ 導覽列插入這裡 */}
-      <main style={{ maxWidth: 1000, margin: '0 auto', padding: 20 }}>
+      <Navbar />
+      <main style={{ maxWidth: 1200, margin: '0 auto', padding: 20 }}>
         <h1>市集 | 所有上架的 NFT</h1>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20 }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+            gap: 20,
+          }}
+        >
           {nfts.map((item) => (
-            <div key={item.id} style={{ border: '1px solid #ccc', padding: 10, width: 280 }}>
+            <div key={item.id} style={{ border: '1px solid #ccc', padding: 10, borderRadius: 8 }}>
               <Link href={`/nft/${item.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                 <img
                   src={item.image_url}
@@ -48,6 +54,7 @@ export default function Market() {
                     width: '100%',
                     height: 200,
                     objectFit: 'cover',
+                    borderRadius: 6,
                     marginBottom: 10,
                   }}
                 />

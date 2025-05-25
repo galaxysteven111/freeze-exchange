@@ -14,21 +14,33 @@ export default function Navbar() {
   const router = useRouter()
   const [darkMode, setDarkMode] = useState(false)
 
+  // ✅ 初始載入時從 localStorage 讀取主題
   useEffect(() => {
     const saved = localStorage.getItem('theme')
     if (saved === 'dark') {
-      document.body.style.backgroundColor = '#111827'
-      document.body.style.color = 'white'
+      document.body.classList.add('dark')
+      document.body.classList.remove('light')
       setDarkMode(true)
+    } else {
+      document.body.classList.add('light')
+      document.body.classList.remove('dark')
+      setDarkMode(false)
     }
   }, [])
 
+  // ✅ 點擊切換主題
   const toggleDark = () => {
     const isDark = !darkMode
     setDarkMode(isDark)
     localStorage.setItem('theme', isDark ? 'dark' : 'light')
-    document.body.style.backgroundColor = isDark ? '#111827' : 'white'
-    document.body.style.color = isDark ? 'white' : 'black'
+
+    if (isDark) {
+      document.body.classList.add('dark')
+      document.body.classList.remove('light')
+    } else {
+      document.body.classList.add('light')
+      document.body.classList.remove('dark')
+    }
   }
 
   return (
@@ -44,19 +56,22 @@ export default function Navbar() {
       top: 0,
       zIndex: 50
     }}>
+      {/* 左邊：導覽列項目 */}
       <div style={{ display: 'flex', gap: 20 }}>
         {navItems.map((item) => (
           <Link key={item.href} href={item.href}>
             <span style={{
               color: router.pathname === item.href ? '#60a5fa' : 'white',
               fontWeight: router.pathname === item.href ? 'bold' : 'normal',
-              cursor: 'pointer',
+              cursor: 'pointer'
             }}>
               {item.label}
             </span>
           </Link>
         ))}
       </div>
+
+      {/* 右邊：主題切換按鈕 */}
       <button
         onClick={toggleDark}
         style={{

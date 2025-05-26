@@ -12,7 +12,6 @@ import {
 } from '@solana/web3.js'
 import {
   createTransferInstruction,
-  getOrCreateAssociatedTokenAccount,
 } from '@solana/spl-token'
 import { Metaplex } from '@metaplex-foundation/js'
 

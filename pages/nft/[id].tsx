@@ -1,6 +1,7 @@
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
+import { getAssociatedTokenAddress } from '@solana/spl-token'
 import {
   Connection,
   PublicKey,
@@ -162,7 +163,7 @@ const handleBuy = async () => {
     const priceLamports = nft.price * LAMPORTS_PER_SOL
     const connection = new Connection(clusterApiUrl('mainnet-beta'), 'confirmed')
 
-    // ✅ 付款 SOL 給賣家
+    // ✅ 第一步：付款
     const paymentTx = new Transaction().add(
       SystemProgram.transfer({
         fromPubkey: buyer,
@@ -177,24 +178,22 @@ const handleBuy = async () => {
     const paymentSig = await connection.sendRawTransaction(signedPayment.serialize())
     await connection.confirmTransaction(paymentSig)
 
-    // ✅ 查找 token accounts
-    const metaplex = Metaplex.make(connection)
+    // ✅ 第二步：查詢 seller 與 buyer 的 ATA
+    const sellerTokenAddress = await getAssociatedTokenAddress(
+      mintAddress,
+      seller
+    )
 
-    const sellerAta = await metaplex.tokens().findTokenAccountByMint({
-      mint: mintAddress,
-      owner: seller
-    }).run()
+    const buyerTokenAddress = await getAssociatedTokenAddress(
+      mintAddress,
+      buyer
+    )
 
-    const buyerAta = await metaplex.tokens().findTokenAccountByMint({
-      mint: mintAddress,
-      owner: buyer
-    }).run()
-
-    // ✅ NFT 轉移
+    // ✅ 第三步：構建 NFT 轉移交易
     const nftTransferTx = new Transaction().add(
       createTransferInstruction(
-        sellerAta.address,
-        buyerAta.address,
+        sellerTokenAddress,
+        buyerTokenAddress,
         seller,
         1
       )
@@ -206,7 +205,7 @@ const handleBuy = async () => {
     const nftSig = await connection.sendRawTransaction(signedNFTTx.serialize())
     await connection.confirmTransaction(nftSig)
 
-    // ✅ 記錄訂單
+    // ✅ 第四步：寫入訂單與紀錄
     await supabase.from('orders').insert({
       nft_id: nft.id,
       buyer: buyer.toBase58(),
@@ -233,6 +232,7 @@ const handleBuy = async () => {
     alert('交易失敗，請檢查錢包與鏈上狀態')
   }
 }
+
 
   if (!nft) return <p style={{ padding: 20 }}>載入中...</p>
 

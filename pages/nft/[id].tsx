@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import {
   Connection,
@@ -27,6 +27,7 @@ export default function NFTDetail() {
   const [newMessage, setNewMessage] = useState('')
   const [walletAddress, setWalletAddress] = useState<string | null>(null)
   const [canComment, setCanComment] = useState(false)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (id) {
@@ -48,7 +49,7 @@ export default function NFTDetail() {
           filter: `nft_id=eq.${id}`,
         },
         (payload) => {
-          setMessages((prev) => [payload.new, ...prev])
+          setMessages((prev) => [...prev, payload.new])
         }
       )
       .subscribe()
@@ -56,6 +57,10 @@ export default function NFTDetail() {
       supabase.removeChannel(channel)
     }
   }, [id])
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
 
   const connectWallet = async () => {
     const { solana } = window as any
@@ -104,7 +109,7 @@ export default function NFTDetail() {
       .from('messages')
       .select('*')
       .eq('nft_id', id)
-      .order('created_at', { ascending: false })
+      .order('created_at', { ascending: true })
     if (data) setMessages(data)
   }
 
@@ -195,34 +200,33 @@ export default function NFTDetail() {
       </button>
 
       <hr style={{ margin: '40px 0' }} />
-      <h2>💬 NFT 留言區</h2>
+      <h2>💬 NFT 聊天室</h2>
 
-      {!walletAddress && (
-        <button onClick={connectWallet} style={{ marginBottom: 20 }}>連接錢包以留言</button>
-      )}
-
-      {walletAddress && canComment ? (
-        <>
-          <textarea placeholder="輸入留言內容..." value={newMessage} onChange={(e) => setNewMessage(e.target.value)} style={{ width: '100%', height: 80, marginBottom: 10 }} />
-          <button onClick={handleSendMessage}>送出留言</button>
-        </>
-      ) : walletAddress && (
-        <p style={{ marginBottom: 20, color: 'gray' }}>❌ 僅限賣家與已購買者留言</p>
-      )}
-
-      <div style={{ marginTop: 30 }}>
+      <div style={{ maxHeight: 300, overflowY: 'auto', background: '#f9f9f9', padding: 12, borderRadius: 8, marginBottom: 16 }}>
         {messages.map((msg) => {
           const isMine = msg.sender === walletAddress
           return (
             <div key={msg.id} style={{ display: 'flex', justifyContent: isMine ? 'flex-end' : 'flex-start', marginBottom: 10 }}>
               <div style={{ backgroundColor: isMine ? '#6366f1' : '#e5e7eb', color: isMine ? 'white' : '#111827', padding: '10px 14px', borderRadius: 16, maxWidth: '70%', boxShadow: '0 2px 6px rgba(0,0,0,0.1)' }}>
-                <div style={{ fontSize: 12, marginBottom: 4, opacity: 0.7 }}>{isMine ? '你' : `${msg.sender.slice(0, 4)}...${msg.sender.slice(-4)}`}</div>
-                <div style={{ wordBreak: 'break-word' }}>{msg.content}</div>
-                <div style={{ fontSize: 10, marginTop: 6, textAlign: 'right', opacity: 0.5 }}>{new Date(msg.created_at).toLocaleString()}</div>
+                <div style={{ fontSize: 12, opacity: 0.6, marginBottom: 4 }}>{msg.sender.slice(0, 4)}...{msg.sender.slice(-4)}・{new Date(msg.created_at).toLocaleTimeString()}</div>
+                <div>{msg.content}</div>
               </div>
             </div>
           )
         })}
+        <div ref={messagesEndRef} />
+      </div>
+
+      <div style={{ display: 'flex', gap: 10 }}>
+        <input
+          value={newMessage}
+          onChange={(e) => setNewMessage(e.target.value)}
+          placeholder="輸入訊息..."
+          style={{ flex: 1, padding: 10, borderRadius: 6, border: '1px solid #ccc' }}
+        />
+        <button onClick={handleSendMessage} style={{ padding: '10px 16px', background: '#6366f1', color: 'white', border: 'none', borderRadius: 6 }}>
+          發送
+        </button>
       </div>
     </main>
   )

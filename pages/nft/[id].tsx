@@ -139,7 +139,7 @@ const user = solana?.publicKey?.toBase58()
     try {
       const provider = window.solana
       await provider.connect()
-      const buyer = provider.publicKey
+      const buyer = new PublicKey(provider.publicKey.toBase58())
       const seller = new PublicKey(nft.owner)
       const mintAddress = new PublicKey(nft.mint_address)
 

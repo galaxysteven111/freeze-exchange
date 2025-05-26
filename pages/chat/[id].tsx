@@ -69,7 +69,10 @@ export default function ChatRoom() {
 
   const handleSend = async () => {
     const nftId = typeof id === 'string' ? id : Array.isArray(id) ? id[0] : null
-    if (!walletAddress || !newMessage.trim() || !nftId) return
+    if (!walletAddress || !newMessage.trim() || !nftId) {
+      alert('請先連接錢包並輸入留言')
+      return
+    }
     const { error } = await supabase.from('messages').insert({
       nft_id: nftId,
       sender: walletAddress,
@@ -89,6 +92,31 @@ export default function ChatRoom() {
             <p style={{ margin: 0, fontSize: 14, color: '#666' }}>{nft.description}</p>
           </div>
         </div>
+      )}
+
+      {!walletAddress && (
+        <button
+          onClick={async () => {
+            const { solana } = window as any
+            if (solana?.isPhantom) {
+              const res = await solana.connect()
+              setWalletAddress(res.publicKey.toString())
+            } else {
+              alert('請安裝 Phantom 錢包')
+            }
+          }}
+          style={{
+            marginBottom: 12,
+            padding: '8px 16px',
+            background: '#6366f1',
+            color: '#fff',
+            border: 'none',
+            borderRadius: 6,
+            cursor: 'pointer'
+          }}
+        >
+          連接錢包以留言
+        </button>
       )}
 
       <div style={{ border: '1px solid #ccc', borderRadius: 6, padding: 10, height: 400, overflowY: 'auto', background: '#f9f9f9' }}>

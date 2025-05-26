@@ -8,6 +8,8 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
+const EMOJIS = ['😀', '😂', '😍', '👍', '🔥', '🎉', '💎', '👀', '❤️']
+
 export default function ChatRoom() {
   const router = useRouter()
   const { id } = router.query
@@ -81,6 +83,10 @@ export default function ChatRoom() {
     if (!error) setNewMessage('')
   }
 
+  const insertEmoji = (emoji: string) => {
+    setNewMessage((prev) => prev + emoji)
+  }
+
   return (
     <main style={{ maxWidth: 800, margin: '0 auto', padding: 20 }}>
       <h2 style={{ fontSize: 20, marginBottom: 12 }}>📨 NFT Chat Room</h2>
@@ -143,7 +149,15 @@ export default function ChatRoom() {
         <div ref={messagesEndRef} />
       </div>
 
-      <div style={{ display: 'flex', marginTop: 16, gap: 8 }}>
+      <div style={{ marginTop: 8, marginBottom: 6, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+        {EMOJIS.map((emoji) => (
+          <button key={emoji} onClick={() => insertEmoji(emoji)} style={{ padding: '6px 10px', fontSize: 18, border: 'none', background: '#f3f4f6', borderRadius: 8, cursor: 'pointer' }}>
+            {emoji}
+          </button>
+        ))}
+      </div>
+
+      <div style={{ display: 'flex', marginTop: 8, gap: 8 }}>
         <input
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}

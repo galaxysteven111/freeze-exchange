@@ -1,3 +1,4 @@
+/// <reference path="../../types/global.d.ts" />
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'

@@ -62,20 +62,32 @@ export default function Market() {
               </Link>
               <p>{item.description}</p>
               <p><strong>{item.price} SOL</strong></p>
-              <button
-                onClick={() => handleBuy(item)}
-                style={{
-                  marginTop: 10,
-                  backgroundColor: '#6366f1',
-                  color: 'white',
-                  padding: '6px 12px',
-                  border: 'none',
-                  borderRadius: 4,
-                  cursor: 'pointer'
-                }}
-              >
-                立即購買
-              </button>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                <button
+                  onClick={() => handleBuy(item)}
+                  style={{
+                    backgroundColor: '#6366f1',
+                    color: 'white',
+                    padding: '6px 12px',
+                    border: 'none',
+                    borderRadius: 4,
+                    cursor: 'pointer'
+                  }}
+                >
+                  立即購買
+                </button>
+                <Link href={`/chat/${item.id}`} style={{ textDecoration: 'none' }}>
+                  <button style={{
+                    backgroundColor: '#e2e8f0',
+                    padding: '6px 12px',
+                    borderRadius: 4,
+                    border: 'none',
+                    cursor: 'pointer'
+                  }}>
+                    💬 留言
+                  </button>
+                </Link>
+              </div>
             </div>
           ))}
         </div>

@@ -15,6 +15,25 @@ import {
   getOrCreateAssociatedTokenAccount,
 } from '@solana/spl-token'
 import { Metaplex } from '@metaplex-foundation/js'
+interface PhantomProvider {
+  isPhantom?: boolean
+  connect: (options?: any) => Promise<{
+    publicKey: {
+      toBase58(): string
+    }
+  }>
+  publicKey?: {
+    toBase58(): string
+  }
+  signTransaction?: any
+  signAllTransactions?: any
+}
+
+declare global {
+  interface Window {
+    solana?: PhantomProvider
+  }
+}
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,

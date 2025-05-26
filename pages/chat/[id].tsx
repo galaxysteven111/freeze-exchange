@@ -14,6 +14,7 @@ export default function ChatRoom() {
   const [messages, setMessages] = useState<any[]>([])
   const [newMessage, setNewMessage] = useState('')
   const [walletAddress, setWalletAddress] = useState<string | null>(null)
+  const [nft, setNft] = useState<any>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -36,7 +37,14 @@ export default function ChatRoom() {
         .order('created_at', { ascending: true })
       if (data) setMessages(data)
     }
-    if (id) fetchMessages()
+    const fetchNFT = async () => {
+      const { data } = await supabase.from('listings').select('*').eq('id', id).single()
+      if (data) setNft(data)
+    }
+    if (id) {
+      fetchMessages()
+      fetchNFT()
+    }
   }, [id])
 
   useEffect(() => {
@@ -72,7 +80,17 @@ export default function ChatRoom() {
 
   return (
     <main style={{ maxWidth: 800, margin: '0 auto', padding: 20 }}>
-      <h2 style={{ fontSize: 20, marginBottom: 16 }}>📨 NFT Chat Room</h2>
+      <h2 style={{ fontSize: 20, marginBottom: 12 }}>📨 NFT Chat Room</h2>
+      {nft && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16, border: '1px solid #ddd', padding: 12, borderRadius: 8 }}>
+          <img src={nft.image_url} alt={nft.name} style={{ width: 60, height: 60, borderRadius: 8, objectFit: 'cover' }} />
+          <div>
+            <h3 style={{ margin: 0 }}>{nft.name}</h3>
+            <p style={{ margin: 0, fontSize: 14, color: '#666' }}>{nft.description}</p>
+          </div>
+        </div>
+      )}
+
       <div style={{ border: '1px solid #ccc', borderRadius: 6, padding: 10, height: 400, overflowY: 'auto', background: '#f9f9f9' }}>
         {messages.map((msg) => {
           const isMine = msg.sender === walletAddress

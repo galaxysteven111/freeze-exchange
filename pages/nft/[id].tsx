@@ -1,3 +1,4 @@
+/// <reference path="../../types/global.d.ts" />
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
@@ -14,25 +15,6 @@ import {
   getOrCreateAssociatedTokenAccount,
 } from '@solana/spl-token'
 import { Metaplex } from '@metaplex-foundation/js'
-interface PhantomProvider {
-  isPhantom?: boolean
-  connect: (options?: any) => Promise<{
-    publicKey: {
-      toBase58(): string
-    }
-  }>
-  publicKey?: {
-    toBase58(): string
-  }
-  signTransaction?: any
-  signAllTransactions?: any
-}
-
-declare global {
-  interface Window {
-    solana?: PhantomProvider
-  }
-}
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,

@@ -130,98 +130,110 @@ const user = solana?.publicKey?.toBase58()
     }
   }
 
-  const handleBuy = async () => {
-    if (!window.solana || !window.solana.isPhantom) {
-      alert('請安裝 Phantom 錢包')
+const handleBuy = async () => {
+  if (!window.solana || !window.solana.isPhantom) {
+    alert('請安裝 Phantom 錢包')
+    return
+  }
+
+  try {
+    const provider = window.solana
+    await provider.connect()
+    const buyer = new PublicKey(provider.publicKey.toBase58())
+    const seller = new PublicKey(nft.owner)
+    const mintAddress = new PublicKey(nft.mint_address)
+
+    if (buyer.toBase58() === seller.toBase58()) {
+      alert('❌ 你不能購買自己上架的 NFT')
       return
     }
 
-    try {
-      const provider = window.solana
-      await provider.connect()
-      const buyer = new PublicKey(provider.publicKey.toBase58())
-      const seller = new PublicKey(nft.owner)
-      const mintAddress = new PublicKey(nft.mint_address)
+    const { data: latestData, error: latestError } = await supabase
+      .from('listings')
+      .select('id')
+      .eq('id', nft.id)
+      .single()
 
-      if (buyer.toBase58() === seller.toBase58()) {
-        alert('❌ 你不能購買自己上架的 NFT')
-        return
-      }
-
-      const { data: latestData, error: latestError } = await supabase
-        .from('listings')
-        .select('id')
-        .eq('id', nft.id)
-        .single()
-
-      if (latestError || !latestData) {
-        alert('❌ 這個 NFT 已經被其他人買走了')
-        return
-      }
-
-      const priceLamports = nft.price * LAMPORTS_PER_SOL
-      const connection = new Connection(clusterApiUrl('mainnet-beta'), 'confirmed')
-
-      const paymentTx = new Transaction().add(
-        SystemProgram.transfer({
-          fromPubkey: buyer,
-          toPubkey: seller,
-          lamports: priceLamports,
-        })
-      )
-      paymentTx.feePayer = buyer
-      paymentTx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash
-
-      const signedPayment = await provider.signTransaction(paymentTx)
-      const paymentSig = await connection.sendRawTransaction(signedPayment.serialize())
-      await connection.confirmTransaction(paymentSig)
-
-      const metaplex = Metaplex.make(connection)
-      const token = await getOrCreateAssociatedTokenAccount(connection, provider, mintAddress, seller)
-      const buyerTokenAccount = await getOrCreateAssociatedTokenAccount(connection, provider, mintAddress, buyer)
-
-      const nftTransferTx = new Transaction().add(
-        createTransferInstruction(
-          token.address,
-          buyerTokenAccount.address,
-          seller,
-          1
-        )
-      )
-      nftTransferTx.feePayer = buyer
-      nftTransferTx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash
-
-      const signedNFTTx = await provider.signTransaction(nftTransferTx)
-      const nftSig = await connection.sendRawTransaction(signedNFTTx.serialize())
-      await connection.confirmTransaction(nftSig)
-
-      await supabase.from('orders').insert({
-        nft_id: nft.id,
-        buyer: buyer.toBase58(),
-        seller: seller.toBase58(),
-        price: nft.price,
-        payment_sig: paymentSig,
-        nft_sig: nftSig,
-      })
-
-      // ✅ 寫入 sold_items 成交紀錄
-      await supabase.from('sold_items').insert({
-        name: nft.name,
-        image_url: nft.image_url,
-        mint_address: nft.mint_address,
-        price: nft.price,
-        seller: seller.toBase58(),
-        buyer: buyer.toBase58(),
-      })
-
-      await supabase.from('listings').delete().eq('id', nft.id)
-
-      alert(`✅ 成交完成！\n付款: ${paymentSig}\nNFT: ${nftSig}`)
-    } catch (err) {
-      console.error('❌ 發生錯誤：', err)
-      alert('交易失敗，請檢查錢包與鏈上狀態')
+    if (latestError || !latestData) {
+      alert('❌ 這個 NFT 已經被其他人買走了')
+      return
     }
+
+    const priceLamports = nft.price * LAMPORTS_PER_SOL
+    const connection = new Connection(clusterApiUrl('mainnet-beta'), 'confirmed')
+
+    // ✅ 付款 SOL 給賣家
+    const paymentTx = new Transaction().add(
+      SystemProgram.transfer({
+        fromPubkey: buyer,
+        toPubkey: seller,
+        lamports: priceLamports,
+      })
+    )
+    paymentTx.feePayer = buyer
+    paymentTx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash
+
+    const signedPayment = await provider.signTransaction(paymentTx)
+    const paymentSig = await connection.sendRawTransaction(signedPayment.serialize())
+    await connection.confirmTransaction(paymentSig)
+
+    // ✅ 查找 token accounts
+    const metaplex = Metaplex.make(connection)
+
+    const sellerAta = await metaplex.tokens().findTokenAccountByMint({
+      mint: mintAddress,
+      owner: seller
+    }).run()
+
+    const buyerAta = await metaplex.tokens().findTokenAccountByMint({
+      mint: mintAddress,
+      owner: buyer
+    }).run()
+
+    // ✅ NFT 轉移
+    const nftTransferTx = new Transaction().add(
+      createTransferInstruction(
+        sellerAta.address,
+        buyerAta.address,
+        seller,
+        1
+      )
+    )
+    nftTransferTx.feePayer = buyer
+    nftTransferTx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash
+
+    const signedNFTTx = await provider.signTransaction(nftTransferTx)
+    const nftSig = await connection.sendRawTransaction(signedNFTTx.serialize())
+    await connection.confirmTransaction(nftSig)
+
+    // ✅ 記錄訂單
+    await supabase.from('orders').insert({
+      nft_id: nft.id,
+      buyer: buyer.toBase58(),
+      seller: seller.toBase58(),
+      price: nft.price,
+      payment_sig: paymentSig,
+      nft_sig: nftSig,
+    })
+
+    await supabase.from('sold_items').insert({
+      name: nft.name,
+      image_url: nft.image_url,
+      mint_address: nft.mint_address,
+      price: nft.price,
+      seller: seller.toBase58(),
+      buyer: buyer.toBase58(),
+    })
+
+    await supabase.from('listings').delete().eq('id', nft.id)
+
+    alert(`✅ 成交完成！\n付款 tx: ${paymentSig}\nNFT tx: ${nftSig}`)
+  } catch (err) {
+    console.error('❌ 發生錯誤：', err)
+    alert('交易失敗，請檢查錢包與鏈上狀態')
   }
+}
+
   if (!nft) return <p style={{ padding: 20 }}>載入中...</p>
 
   return (

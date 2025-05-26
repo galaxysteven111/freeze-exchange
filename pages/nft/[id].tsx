@@ -107,22 +107,6 @@ export default function NFTDetail() {
       checkCommentAccess(data)
     }
   }
-// ✅ 直接補強 window 型別（保證 Vercel 編譯成功）
-interface PhantomProvider {
-  isPhantom?: boolean
-  connect: (options?: any) => Promise<{ publicKey: { toBase58(): string } }>
-  publicKey?: {
-    toBase58(): string
-  }
-  signTransaction?: any
-  signAllTransactions?: any
-}
-
-declare global {
-  interface Window {
-    solana?: PhantomProvider
-  }
-}
   const checkCommentAccess = async (nft: any) => {
     const user = window.solana?.publicKey?.toBase58()
     if (!user) return

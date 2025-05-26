@@ -50,13 +50,14 @@ export default function Market() {
                 <img
                   src={item.image_url}
                   alt={item.name}
-                  style={{
-                    width: '100%',
-                    height: 200,
-                    objectFit: 'cover',
-                    borderRadius: 6,
-                    marginBottom: 10,
-                  }}
+                 style={{
+  width: '100%',
+  height: 'auto',
+  maxHeight: 200,
+  objectFit: 'cover',
+  borderRadius: 6,
+  marginBottom: 10,
+}}
                 />
                 <h3>{item.name}</h3>
               </Link>

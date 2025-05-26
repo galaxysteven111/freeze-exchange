@@ -8,18 +8,18 @@
     "start": "next start"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.39.5",
-    "@solana/web3.js": "^1.73.3",
-    "@metaplex/js": "^4.12.0",
+    "@metaplex-foundation/js": "^0.20.1",
     "@solana/spl-token": "^0.3.10",
+    "@solana/web3.js": "^1.73.3",
+    "@supabase/supabase-js": "^2.39.5",
     "next": "13.5.6",
     "react": "18.2.0",
     "react-dom": "18.2.0"
   },
   "devDependencies": {
-    "typescript": "^5.0.0",
+    "@types/node": "^18.15.11",
     "@types/react": "^18.0.28",
-    "@types/node": "^18.15.11"
+    "typescript": "^5.0.0"
   },
   "engines": {
     "node": "18.x"

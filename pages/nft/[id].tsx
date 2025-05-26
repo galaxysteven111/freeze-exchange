@@ -112,17 +112,22 @@ export default function NFTDetail() {
       .order('created_at', { ascending: true })
     if (data) setMessages(data)
   }
+const handleSendMessage = async () => {
+  if (!walletAddress || !newMessage.trim()) return
 
-  const handleSendMessage = async () => {
-    if (!walletAddress || !newMessage.trim()) return
-    const { error } = await supabase.from('messages').insert({
-      nft_id: nft.id,
-      sender: walletAddress,
-      content: newMessage,
-    })
-    if (!error) setNewMessage('')
+  const { error } = await supabase.from('messages').insert({
+    nft_id: id, // 注意：id 來自 useRouter().query
+    sender: walletAddress,
+    content: newMessage,
+  })
+
+  if (error) {
+    alert(`❌ 發送失敗：${error.message}`)
+    console.error(error)
+  } else {
+    setNewMessage('')
   }
-
+}
   const handleBuy = async () => {
     const solana = (window as any).solana
     if (!solana?.isPhantom) {

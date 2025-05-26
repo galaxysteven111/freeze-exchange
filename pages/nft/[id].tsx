@@ -118,8 +118,14 @@ const handleSendMessage = async () => {
     return
   }
 
+  const nftId = typeof id === 'string' ? id : Array.isArray(id) ? id[0] : null
+  if (!nftId) {
+    alert('❌ NFT ID 無效')
+    return
+  }
+
   const { error } = await supabase.from('messages').insert({
-    nft_id: id, // 注意：這裡用 router.query.id 而不是 nft.id
+    nft_id: nftId,
     sender: walletAddress,
     content: newMessage,
   })
@@ -131,6 +137,7 @@ const handleSendMessage = async () => {
     setNewMessage('')
   }
 }
+
   const handleBuy = async () => {
     const solana = (window as any).solana
     if (!solana?.isPhantom) {

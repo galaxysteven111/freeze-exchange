@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
-import Navbar from '../components/Navbar' // ✅ 新增：引入 Navbar
+import Navbar from '../components/Navbar'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -27,6 +27,11 @@ export default function ListNFT() {
       return
     }
 
+    if (!form.name || !form.image_url || !form.mint_address || !form.price) {
+      alert('請完整填寫所有欄位（至少名稱、圖片、地址、價格）')
+      return
+    }
+
     const { error } = await supabase.from('listings').insert({
       ...form,
       owner: walletAddress,
@@ -35,7 +40,7 @@ export default function ListNFT() {
     })
 
     if (error) {
-      alert('上架失敗')
+      alert(`❌ 上架失敗：${error.message}`)
       console.error(error)
     } else {
       alert('✅ NFT 已成功上架！')
@@ -59,7 +64,7 @@ export default function ListNFT() {
 
   return (
     <>
-      <Navbar /> {/* ✅ 新增：導覽列 */}
+      <Navbar />
       <main style={{ maxWidth: 600, margin: '0 auto', padding: 20 }}>
         <h1>上架你的 NFT</h1>
 
@@ -75,7 +80,9 @@ export default function ListNFT() {
         <textarea name="description" placeholder="描述" value={form.description} onChange={handleChange} style={{ display: 'block', width: '100%', marginBottom: 10 }} />
         <input name="price" type="number" placeholder="價格 (SOL)" value={form.price} onChange={handleChange} style={{ display: 'block', width: '100%', marginBottom: 10 }} />
 
-        <button onClick={handleSubmit}>確認上架</button>
+        <button onClick={handleSubmit} style={{ padding: '10px 16px', backgroundColor: '#6366f1', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer' }}>
+          確認上架
+        </button>
       </main>
     </>
   )

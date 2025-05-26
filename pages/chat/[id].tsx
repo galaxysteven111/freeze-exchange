@@ -119,14 +119,23 @@ export default function ChatRoom() {
         </button>
       )}
 
-      <div style={{ border: '1px solid #ccc', borderRadius: 6, padding: 10, height: 400, overflowY: 'auto', background: '#f9f9f9' }}>
+      <div style={{ border: '1px solid #ccc', borderRadius: 6, padding: 10, height: 400, overflowY: 'auto', background: '#fff', boxShadow: 'inset 0 1px 4px rgba(0,0,0,0.05)' }}>
         {messages.map((msg) => {
           const isMine = msg.sender === walletAddress
           return (
-            <div key={msg.id} style={{ display: 'flex', justifyContent: isMine ? 'flex-end' : 'flex-start', marginBottom: 10 }}>
-              <div style={{ background: isMine ? '#4f46e5' : '#e5e7eb', color: isMine ? '#fff' : '#000', padding: '8px 12px', borderRadius: 16, maxWidth: '70%' }}>
-                <div style={{ fontSize: 12, marginBottom: 4, opacity: 0.6 }}>{msg.sender.slice(0, 4)}...{msg.sender.slice(-4)}</div>
-                <div>{msg.content}</div>
+            <div key={msg.id} style={{ display: 'flex', justifyContent: isMine ? 'flex-end' : 'flex-start', marginBottom: 8 }}>
+              <div style={{
+                background: isMine ? '#4f46e5' : '#f1f5f9',
+                color: isMine ? '#fff' : '#000',
+                padding: '10px 14px',
+                borderRadius: 18,
+                maxWidth: '70%',
+                fontSize: 14,
+                lineHeight: '1.4',
+                boxShadow: '0 2px 5px rgba(0,0,0,0.06)'
+              }}>
+                <div style={{ fontSize: 12, marginBottom: 4, opacity: 0.5 }}>{msg.sender.slice(0, 4)}...{msg.sender.slice(-4)}</div>
+                {msg.content}
               </div>
             </div>
           )
@@ -134,14 +143,14 @@ export default function ChatRoom() {
         <div ref={messagesEndRef} />
       </div>
 
-      <div style={{ display: 'flex', marginTop: 12, gap: 8 }}>
+      <div style={{ display: 'flex', marginTop: 16, gap: 8 }}>
         <input
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           placeholder="輸入訊息..."
-          style={{ flex: 1, padding: 10, borderRadius: 6, border: '1px solid #ccc' }}
+          style={{ flex: 1, padding: 12, borderRadius: 8, border: '1px solid #ccc', fontSize: 15 }}
         />
-        <button onClick={handleSend} style={{ padding: '10px 16px', background: '#6366f1', color: 'white', border: 'none', borderRadius: 6 }}>
+        <button onClick={handleSend} style={{ padding: '12px 20px', background: '#6366f1', color: 'white', border: 'none', borderRadius: 8, fontSize: 15, cursor: 'pointer' }}>
           發送
         </button>
       </div>

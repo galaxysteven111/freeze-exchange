@@ -89,7 +89,8 @@ export default function NFTDetail() {
     }
   }
   const checkCommentAccess = async (nft: any) => {
-    const user = window.solana?.publicKey?.toBase58()
+    const solana = (window as any).solana
+const user = solana?.publicKey?.toBase58()
     if (!user) return
 
     if (user === nft.owner) {

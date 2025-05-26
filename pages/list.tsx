@@ -1,79 +1,88 @@
+import { useState } from 'react'
+import { createClient } from '@supabase/supabase-js'
 import Navbar from '../components/Navbar'
-import { useEffect, useRef, useState } from 'react'
-import Image from 'next/image'
 
-export default function Home() {
-  const [walletAddress, setWalletAddress] = useState<string | null>(null)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 
-  useEffect(() => {
-    const connectWallet = async () => {
-      const { solana } = window as any
-      if (solana?.isPhantom) {
-        try {
-          const res = await solana.connect({ onlyIfTrusted: true })
-          setWalletAddress(res.publicKey.toString())
-        } catch {
-          // 忽略錯誤
-        }
-      }
-    }
-    connectWallet()
-  }, [])
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+export default function ListNFT() {
+  const [form, setForm] = useState({
+    name: '',
+    image_url: '',
+    mint_address: '',
+    description: '',
+    price: ''
   })
+  const [walletAddress, setWalletAddress] = useState<string | null>(null)
 
-  const sampleMessages = [
-    { id: 1, sender: 'you', content: '嗨，這個 NFT 還在嗎？', timestamp: '10:01' },
-    { id: 2, sender: 'other', content: '在的，價格可以談', timestamp: '10:03' },
-    { id: 3, sender: 'you', content: '7 SOL 可以嗎？', timestamp: '10:04' },
-    { id: 4, sender: 'other', content: '我設定是 8.88，但你買兩個我便宜點', timestamp: '10:06' },
-  ]
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setForm({ ...form, [e.target.name]: e.target.value })
+  }
+
+  const handleSubmit = async () => {
+    if (!walletAddress) {
+      alert('請先連接錢包')
+      return
+    }
+
+    if (!form.name || !form.image_url || !form.mint_address || !form.price) {
+      alert('請完整填寫所有欄位（至少名稱、圖片、地址、價格）')
+      return
+    }
+
+    const { error } = await supabase.from('listings').insert({
+      ...form,
+      owner: walletAddress,
+      price: parseFloat(form.price),
+      created_at: new Date()
+    })
+
+    if (error) {
+      alert(`❌ 上架失敗：${error.message}`)
+      console.error(error)
+    } else {
+      alert('✅ NFT 已成功上架！')
+      setForm({ name: '', image_url: '', mint_address: '', description: '', price: '' })
+    }
+  }
+
+  const connectWallet = async () => {
+    const { solana } = window as any
+    if (solana && solana.isPhantom) {
+      try {
+        const res = await solana.connect()
+        setWalletAddress(res.publicKey.toString())
+      } catch (err) {
+        alert('錢包連接失敗')
+      }
+    } else {
+      alert('請安裝 Phantom 錢包')
+    }
+  }
 
   return (
     <>
       <Navbar />
-      <main style={{ padding: 40, textAlign: 'center' }}>
-        <Image
-          src="/logo-freeze.svg"
-          alt="Freeze Exchange Logo"
-          width={120}
-          height={120}
-          style={{ marginBottom: 20 }}
-        />
-        <h1 style={{ fontSize: '32px', fontWeight: 'bold', marginBottom: 12 }}>
-          🧊 Freeze Exchange
-        </h1>
-        <p style={{ marginBottom: 20, fontSize: 16, color: '#4B5563' }}>
-          專為 Solana 設計的 NFT 二手交易平台
-        </p>
-        <p style={{ fontSize: 14, color: 'gray' }}>
-          {walletAddress
-            ? `已連接錢包：${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}`
-            : '尚未連接 Phantom 錢包'}
-        </p>
+      <main style={{ maxWidth: 600, margin: '0 auto', padding: 20 }}>
+        <h1>上架你的 NFT</h1>
 
-        {/* Chatbox 模擬 UI */}
-        <div style={{ maxWidth: 500, margin: '40px auto 0', textAlign: 'left', border: '1px solid #ccc', borderRadius: 10, padding: 16, height: 300, overflowY: 'auto', background: '#f9f9f9' }}>
-          {sampleMessages.map((msg) => (
-            <div key={msg.id} style={{ display: 'flex', justifyContent: msg.sender === 'you' ? 'flex-end' : 'flex-start', marginBottom: 12 }}>
-              <div style={{
-                backgroundColor: msg.sender === 'you' ? '#6366f1' : '#e5e7eb',
-                color: msg.sender === 'you' ? 'white' : '#111827',
-                padding: '10px 14px',
-                borderRadius: 16,
-                maxWidth: '70%',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.05)',
-              }}>
-                <div style={{ fontSize: 12, opacity: 0.6, marginBottom: 4 }}>{msg.sender === 'you' ? '你' : '賣家'}・{msg.timestamp}</div>
-                <div style={{ wordBreak: 'break-word' }}>{msg.content}</div>
-              </div>
-            </div>
-          ))}
-          <div ref={messagesEndRef} />
-        </div>
+        {!walletAddress && (
+          <button onClick={connectWallet} style={{ marginBottom: 20 }}>
+            連接 Phantom 錢包
+          </button>
+        )}
+
+        <input name="name" placeholder="NFT 名稱" value={form.name} onChange={handleChange} style={{ display: 'block', width: '100%', marginBottom: 10 }} />
+        <input name="image_url" placeholder="圖片網址" value={form.image_url} onChange={handleChange} style={{ display: 'block', width: '100%', marginBottom: 10 }} />
+        <input name="mint_address" placeholder="Mint Address" value={form.mint_address} onChange={handleChange} style={{ display: 'block', width: '100%', marginBottom: 10 }} />
+        <textarea name="description" placeholder="描述" value={form.description} onChange={handleChange} style={{ display: 'block', width: '100%', marginBottom: 10 }} />
+        <input name="price" type="number" placeholder="價格 (SOL)" value={form.price} onChange={handleChange} style={{ display: 'block', width: '100%', marginBottom: 10 }} />
+
+        <button onClick={handleSubmit} style={{ padding: '10px 16px', backgroundColor: '#6366f1', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer' }}>
+          確認上架
+        </button>
       </main>
     </>
   )

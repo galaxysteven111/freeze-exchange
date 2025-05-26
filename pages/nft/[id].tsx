@@ -113,10 +113,13 @@ export default function NFTDetail() {
     if (data) setMessages(data)
   }
 const handleSendMessage = async () => {
-  if (!walletAddress || !newMessage.trim()) return
+  if (!walletAddress || !newMessage.trim()) {
+    alert('請先連接錢包並輸入留言')
+    return
+  }
 
   const { error } = await supabase.from('messages').insert({
-    nft_id: id, // 注意：id 來自 useRouter().query
+    nft_id: id, // 注意：這裡用 router.query.id 而不是 nft.id
     sender: walletAddress,
     content: newMessage,
   })

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
-import Navbar from '../components/Navbar'
+import Navbar from '@/components/Navbar'
+import NFTCard from '@/components/NFTCard'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -45,38 +46,14 @@ export default function Market() {
           }}
         >
           {nfts.map((item) => (
-            <div key={item.id} style={{ border: '1px solid #ccc', padding: 10, borderRadius: 8 }}>
-              <Link href={`/nft/${item.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                <img
-                  src={item.image_url}
-                  alt={item.name}
-                 style={{
-  width: '100%',
-  height: 'auto',
-  maxHeight: 200,
-  objectFit: 'cover',
-  borderRadius: 6,
-  marginBottom: 10,
-}}
-                />
-                <h3>{item.name}</h3>
-              </Link>
-              <p>{item.description}</p>
-              <p><strong>{item.price} SOL</strong></p>
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
-                <button
-                  onClick={() => handleBuy(item)}
-                  style={{
-                    backgroundColor: '#6366f1',
-                    color: 'white',
-                    padding: '6px 12px',
-                    border: 'none',
-                    borderRadius: 4,
-                    cursor: 'pointer'
-                  }}
-                >
-                  立即購買
-                </button>
+            <div key={item.id}>
+              <NFTCard
+                image={item.image_url}
+                name={item.name}
+                price={item.price}
+                onClick={() => handleBuy(item)}
+              />
+              <div style={{ marginTop: 8, display: 'flex', justifyContent: 'center' }}>
                 <Link href={`/chat/${item.id}`} style={{ textDecoration: 'none' }}>
                   <button style={{
                     backgroundColor: '#e2e8f0',

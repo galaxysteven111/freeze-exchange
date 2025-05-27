@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
-import Navbar from '../components/Navbar'
+import Navbar from '@/components/Navbar'
+import { useWallet } from '@solana/wallet-adapter-react'
+import { Connection, clusterApiUrl } from '@solana/web3.js'
+import { Metaplex, walletAdapterIdentity, bundlrStorage } from '@metaplex-foundation/js'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -8,57 +11,71 @@ const supabase = createClient(
 )
 
 export default function ListNFT() {
+  const wallet = useWallet()
   const [form, setForm] = useState({
     name: '',
     image_url: '',
-    mint_address: '',
     description: '',
     price: ''
   })
-  const [walletAddress, setWalletAddress] = useState<string | null>(null)
+
+  const [mintAddress, setMintAddress] = useState<string | null>(null)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
 
   const handleSubmit = async () => {
-    if (!walletAddress) {
+    if (!wallet.connected || !wallet.publicKey) {
       alert('請先連接錢包')
       return
     }
 
-    if (!form.name || !form.image_url || !form.mint_address || !form.price) {
-      alert('請完整填寫所有欄位（至少名稱、圖片、地址、價格）')
-      return
-    }
+    const connection = new Connection(clusterApiUrl('devnet'))
+    const metaplex = Metaplex.make(connection)
+      .use(walletAdapterIdentity(wallet))
+      .use(bundlrStorage())
 
-    const { error } = await supabase.from('listings').insert({
-      ...form,
-      owner: walletAddress,
-      price: parseFloat(form.price),
-      created_at: new Date()
-    })
+    try {
+      // 上傳 metadata（可改成上傳 IPFS）
+      const { uri } = await metaplex.nfts().uploadMetadata({
+        name: form.name,
+        description: form.description,
+        image: form.image_url, // 可以是網址或 base64 圖片
+      })
 
-    if (error) {
-      alert(`❌ 上架失敗：${error.message}`)
-      console.error(error)
-    } else {
-      alert('✅ NFT 已成功上架！')
-      setForm({ name: '', image_url: '', mint_address: '', description: '', price: '' })
-    }
-  }
+      // 真正 mint NFT 到使用者錢包
+      const { nft } = await metaplex.nfts().create({
+        uri,
+        name: form.name,
+        sellerFeeBasisPoints: 0,
+      })
 
-  const connectWallet = async () => {
-    const { solana } = window as any
-    if (solana && solana.isPhantom) {
-      try {
-        const res = await solana.connect()
-        setWalletAddress(res.publicKey.toString())
-      } catch (err) {
-        alert('錢包連接失敗')
+      const mintAddress = nft.address.toBase58()
+      setMintAddress(mintAddress)
+      console.log('✅ NFT 已鑄造:', mintAddress)
+
+      // 上傳到 Supabase
+      const { error } = await supabase.from('listings').insert({
+        name: form.name,
+        image_url: form.image_url,
+        description: form.description,
+        price: parseFloat(form.price),
+        mint_address: mintAddress,
+        owner: wallet.publicKey.toBase58(),
+        created_at: new Date(),
+      })
+
+      if (error) {
+        alert(`❌ 上架失敗：${error.message}`)
+        console.error(error)
+      } else {
+        alert('✅ NFT 已成功上架並鑄造到你的錢包')
+        setForm({ name: '', image_url: '', description: '', price: '' })
       }
-    } else {
-      alert('請安裝 Phantom 錢包')
+    } catch (err: any) {
+      console.error('❌ Mint 失敗', err)
+      alert('Mint NFT 發生錯誤，請稍後再試')
     }
   }
 
@@ -68,21 +85,28 @@ export default function ListNFT() {
       <main style={{ maxWidth: 600, margin: '0 auto', padding: 20 }}>
         <h1>上架你的 NFT</h1>
 
-        {!walletAddress && (
-          <button onClick={connectWallet} style={{ marginBottom: 20 }}>
-            連接 Phantom 錢包
-          </button>
+        {!wallet.connected && (
+          <p style={{ marginBottom: 20 }}>請先在右上角連接 Phantom 錢包</p>
         )}
 
         <input name="name" placeholder="NFT 名稱" value={form.name} onChange={handleChange} style={{ display: 'block', width: '100%', marginBottom: 10 }} />
         <input name="image_url" placeholder="圖片網址" value={form.image_url} onChange={handleChange} style={{ display: 'block', width: '100%', marginBottom: 10 }} />
-        <input name="mint_address" placeholder="Mint Address" value={form.mint_address} onChange={handleChange} style={{ display: 'block', width: '100%', marginBottom: 10 }} />
         <textarea name="description" placeholder="描述" value={form.description} onChange={handleChange} style={{ display: 'block', width: '100%', marginBottom: 10 }} />
         <input name="price" type="number" placeholder="價格 (SOL)" value={form.price} onChange={handleChange} style={{ display: 'block', width: '100%', marginBottom: 10 }} />
 
-        <button onClick={handleSubmit} style={{ padding: '10px 16px', backgroundColor: '#6366f1', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer' }}>
-          確認上架
+        <button
+          onClick={handleSubmit}
+          style={{ padding: '10px 16px', backgroundColor: '#6366f1', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer' }}
+        >
+          上架並 Mint NFT
         </button>
+
+        {mintAddress && (
+          <p style={{ marginTop: 20 }}>
+            🎉 成功！NFT Mint 地址為：<br />
+            <code>{mintAddress}</code>
+          </p>
+        )}
       </main>
     </>
   )

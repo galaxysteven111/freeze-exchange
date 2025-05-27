@@ -3,6 +3,8 @@ import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import NFTCard from '@/components/NFTCard'
+import { buyNFT } from '@/lib/solana'
+import { PublicKey } from '@solana/web3.js'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -29,8 +31,34 @@ export default function Market() {
     }
   }
 
-  const handleBuy = (item: any) => {
-    alert(`🛒 未來將付款 ${item.price} SOL 購買：${item.name}\n\n（之後會整合 Phantom 實際交易）`)
+  const handleBuy = async (item: any) => {
+    try {
+      const { solana } = window as any
+      if (!solana?.isPhantom) {
+        alert('請安裝 Phantom 錢包')
+        return
+      }
+
+      const resp = await solana.connect()
+      const buyerPubKey = new PublicKey(resp.publicKey.toString())
+      const sellerPubKey = new PublicKey(item.owner)
+      const mintPubKey = new PublicKey(item.mint_address)
+
+      const transaction = await buyNFT({
+        buyer: buyerPubKey,
+        seller: sellerPubKey,
+        mint: mintPubKey,
+        priceInSol: item.price,
+      })
+
+      const { signature } = await solana.signAndSendTransaction(transaction)
+      console.log('✅ 交易成功，簽名：', signature)
+      alert(`✅ 成功購買 ${item.name}，交易簽名：${signature}`)
+
+    } catch (err) {
+      console.error('❌ 購買失敗', err)
+      alert('❌ 購買失敗，請稍後再試')
+    }
   }
 
   return (

@@ -5,13 +5,14 @@ import { useEffect, useState, FC } from 'react'
 // ✅ 管理員錢包地址（請替換成你自己的）
 const ADMIN_WALLET = '72gKWbsA68HV1i451ihNAMqwVzud9cmUBtsdkoey1BoV'
 
+// ✅ 改為統一以 /dashboard 開頭
 const navItems = [
-  { label: '市集', href: '/market' },
-  { label: '上架 NFT', href: '/list' },
-  { label: '我的上架', href: '/mylistings' },
-  { label: '我的訂單', href: '/orders' },
-  { label: '我的銷售', href: '/sales' },
-  { label: '成交歷史', href: '/history' },
+  { label: '市集', href: '/dashboard/market' },
+  { label: '上架 NFT', href: '/dashboard/list' },
+  { label: '我的上架', href: '/dashboard/mylistings' },
+  { label: '我的訂單', href: '/dashboard/orders' },
+  { label: '我的銷售', href: '/dashboard/sales' },
+  { label: '成交歷史', href: '/dashboard/history' },
 ]
 
 const Navbar: FC = () => {
@@ -19,7 +20,6 @@ const Navbar: FC = () => {
   const [darkMode, setDarkMode] = useState(false)
   const [walletAddress, setWalletAddress] = useState<string | null>(null)
 
-  // ✅ 自動嘗試 Phantom 錢包連接（靜默）
   useEffect(() => {
     const connect = async () => {
       const { solana } = window as any
@@ -35,7 +35,6 @@ const Navbar: FC = () => {
     connect()
   }, [])
 
-  // ✅ 初始載入主題
   useEffect(() => {
     const saved = localStorage.getItem('theme')
     if (saved === 'dark') {
@@ -49,7 +48,6 @@ const Navbar: FC = () => {
     }
   }, [])
 
-  // ✅ 切換主題
   const toggleDark = () => {
     const isDark = !darkMode
     setDarkMode(isDark)
@@ -58,10 +56,9 @@ const Navbar: FC = () => {
     document.body.classList.toggle('light', !isDark)
   }
 
-  // ✅ 管理員判斷：顯示管理選單
   const isAdmin = walletAddress === ADMIN_WALLET
   const finalNavItems = isAdmin
-    ? [...navItems, { label: '🔧 管理', href: '/admin/listings' }]
+    ? [...navItems, { label: '🔧 管理', href: '/dashboard/admin/listings' }]
     : navItems
 
   return (
@@ -77,13 +74,13 @@ const Navbar: FC = () => {
       top: 0,
       zIndex: 50
     }}>
-      {/* 導覽列左側 */}
+      {/* 左側選單連結 */}
       <div style={{ display: 'flex', gap: 20 }}>
         {finalNavItems.map((item) => (
           <Link key={item.href} href={item.href}>
             <span style={{
-              color: router.pathname === item.href ? '#60a5fa' : 'white',
-              fontWeight: router.pathname === item.href ? 'bold' : 'normal',
+              color: router.pathname.startsWith(item.href) ? '#60a5fa' : 'white',
+              fontWeight: router.pathname.startsWith(item.href) ? 'bold' : 'normal',
               cursor: 'pointer',
             }}>
               {item.label}
